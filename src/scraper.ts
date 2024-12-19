@@ -6,14 +6,6 @@ import { userAgents } from "./utils/user-agents";
 
 puppeteer.use(StealthPlugin());
 
-const LINKEDIN_URL =
-  "https://www.linkedin.com/search/results/content/?keywords=artificial+intelligence";
-const USERNAME = process.env.LINKEDIN_USERNAME as string;
-const PASSWORD = process.env.LINKEDIN_PASSWORD as string;
-
-// Specify the number of impressions you want to scrape
-const TARGET_IMPRESSIONS = 20;
-
 // Function to implement random delays to mimic human-like behavior
 function randomDelay() {
   return new Promise((resolve) => {
@@ -23,9 +15,10 @@ function randomDelay() {
 }
 
 // Function to extract data while scrolling until the target number of impressions is reached
-async function extractDataWhileScrolling(
+export async function extractDataWhileScrolling(
   page: Page,
-  targetImpressions: number
+  targetImpressions: number,
+  keyword: string
 ) {
   let impressionsArr: { impression: number; author: string }[] = [];
   let totalImpressions = 0;
@@ -75,14 +68,22 @@ async function extractDataWhileScrolling(
   return impressionsArr;
 }
 
-(async () => {
+export async function startScraping(
+  keyword: string,
+  targetImpressions: number
+) {
   const randomUserAgent =
     userAgents[Math.floor(Math.random() * userAgents.length)];
 
   const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
+  await page.setViewport({ width: 1024, height: 768 });
   await page.setUserAgent(randomUserAgent);
-  // await page.setViewport({ width: 1366, height: 768 });
+
+  // Dynamically build the LinkedIn search URL based on the keyword
+  const LINKEDIN_URL = `https://www.linkedin.com/search/results/content/?keywords=${encodeURIComponent(
+    keyword
+  )}`;
 
   try {
     // Visit the LinkedIn search page
@@ -90,10 +91,14 @@ async function extractDataWhileScrolling(
 
     // Login
     await page.waitForSelector("#username");
-    await page.type("#username", USERNAME, { delay: 300 });
+    await page.type("#username", process.env.LINKEDIN_USERNAME!, {
+      delay: 300,
+    });
 
     await page.waitForSelector("#password");
-    await page.type("#password", PASSWORD, { delay: 300 });
+    await page.type("#password", process.env.LINKEDIN_PASSWORD!, {
+      delay: 300,
+    });
 
     await page.click('button[type="submit"]');
     await page.waitForNavigation({ waitUntil: "networkidle2" });
@@ -102,12 +107,15 @@ async function extractDataWhileScrolling(
     await randomDelay();
 
     // Start extracting data while scrolling until the target number of impressions is reached
-    // const impressionsArr =
-    await extractDataWhileScrolling(page, TARGET_IMPRESSIONS);
-    // console.log(impressionsArr);
+    const impressionsArr = await extractDataWhileScrolling(
+      page,
+      targetImpressions,
+      keyword
+    );
+    console.log(impressionsArr);
   } catch (error) {
     console.error("ERROR: ", error.message);
   } finally {
     await browser.close();
   }
-})();
+}
