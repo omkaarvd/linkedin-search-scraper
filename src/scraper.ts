@@ -14,42 +14,41 @@ function randomDelay() {
   });
 }
 
-// Function to extract data while scrolling until the target number of impressions is reached
+// Function to extract data while scrolling until the target number of posts are reached
 export async function extractDataWhileScrolling(
   page: Page,
-  targetImpressions: number,
-  keyword: string
+  targetPosts: number
 ) {
-  let impressionsArr: { impression: number; author: string }[] = [];
-  let totalImpressions = 0;
+  let postArr: { index: number; author: string }[] = [];
+  let totalPosts = 0;
   let previousHeight: number;
 
-  while (totalImpressions < targetImpressions) {
+  while (totalPosts < targetPosts) {
     const content = await page.content();
     const $ = cheerio.load(content);
 
-    const impressions = $(".fie-impression-container");
+    const posts = $(".fie-impression-container");
 
-    impressions.each((index, element) => {
+    posts.each((index, element) => {
       const $title = $(element).find(
         ".update-components-actor__title > .update-components-actor__single-line-truncate"
       );
       const $selected = $title.find("[aria-hidden=true]").text().trim();
 
-      impressionsArr.push({
-        impression: totalImpressions + 1,
+      postArr.push({
+        index: totalPosts + 1,
         author: $selected,
       });
 
       console.log({
-        impression: totalImpressions + 1,
+        index: totalPosts + 1,
         author: $selected,
       });
 
-      totalImpressions += 1;
+      totalPosts += 1;
 
-      // Stop extraction if the target number of impressions is reached
-      if (totalImpressions >= targetImpressions) {
+      // Stop extraction if the target number of posts are reached
+      if (totalPosts >= targetPosts) {
         return false;
       }
     });
@@ -65,13 +64,10 @@ export async function extractDataWhileScrolling(
     await randomDelay();
   }
 
-  return impressionsArr;
+  return postArr;
 }
 
-export async function startScraping(
-  keyword: string,
-  targetImpressions: number
-) {
+export async function startScraping(keyword: string, targetPosts: number) {
   const randomUserAgent =
     userAgents[Math.floor(Math.random() * userAgents.length)];
 
@@ -106,13 +102,10 @@ export async function startScraping(
     // Random delay before starting scraping to mimic human behavior
     await randomDelay();
 
-    // Start extracting data while scrolling until the target number of impressions is reached
-    const impressionsArr = await extractDataWhileScrolling(
-      page,
-      targetImpressions,
-      keyword
-    );
-    console.log(impressionsArr);
+    // Start extracting data while scrolling until the target number of posts are reached
+    // const postArr =
+    await extractDataWhileScrolling(page, targetPosts);
+    // console.log(postArr);
   } catch (error) {
     console.error("ERROR: ", error.message);
   } finally {
