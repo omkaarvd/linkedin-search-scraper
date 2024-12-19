@@ -11,69 +11,32 @@ const LINKEDIN_URL =
 const USERNAME = process.env.LINKEDIN_USERNAME as string;
 const PASSWORD = process.env.LINKEDIN_PASSWORD as string;
 
-// Function to simulate slower human-like scrolling with random delays
-async function autoScroll(page: Page) {
-  await page.evaluate(async () => {
-    await new Promise<void>((resolve) => {
-      let totalHeight = 0;
-      const distance = Math.random() * 100 + 50; // Randomize scroll distance (50 - 150px)
-      const timer = setInterval(() => {
-        const scrollHeight = document.body.scrollHeight;
-        window.scrollBy(0, distance);
-        totalHeight += distance;
-
-        if (totalHeight >= scrollHeight) {
-          clearInterval(timer);
-          resolve();
-        }
-      }, Math.random() * 800 + 400); // Slower random interval (400 - 1200ms)
-    });
-  });
-}
+// Specify the number of impressions you want to scrape
+const TARGET_IMPRESSIONS = 20;
 
 // Function to implement random delays to mimic human-like behavior
 function randomDelay() {
   return new Promise((resolve) => {
-    const delayTime = Math.random() * 3000 + 1000; // Random delay between 1 to 4 seconds
+    const delayTime = Math.random() * 5000 + 1000; // Random delay between 1 to 6 seconds
     setTimeout(resolve, delayTime);
   });
 }
 
-// Function to implement exponential backoff in case of failure
-async function exponentialBackoff(fn: Function, maxRetries = 5) {
-  let attempt = 0;
-  let success = false;
+// Function to extract data while scrolling until the target number of impressions is reached
+async function extractDataWhileScrolling(
+  page: Page,
+  targetImpressions: number
+) {
+  let impressionsArr: { impression: number; author: string }[] = [];
+  let totalImpressions = 0;
+  let previousHeight: number;
 
-  while (attempt < maxRetries && !success) {
-    try {
-      await fn();
-      success = true;
-    } catch (error) {
-      attempt++;
-      const delay = Math.pow(2, attempt) * 1000; // Exponential backoff (1, 2, 4, 8 seconds)
-      console.log(
-        `Attempt ${attempt} failed. Retrying in ${delay / 1000} seconds...`
-      );
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    }
-  }
-
-  if (!success) {
-    console.log("Max retries reached. Exiting...");
-  }
-}
-
-// Function to extract data while scrolling simultaneously
-async function extractDataWhileScrolling(page: Page) {
-  let isScrolling = true;
-  const impressionsArr: { impression: number; data: string }[] = [];
-
-  while (isScrolling) {
-    // Extract data during the scroll
+  while (totalImpressions < targetImpressions) {
     const content = await page.content();
     const $ = cheerio.load(content);
 
     const impressions = $(".fie-impression-container");
+
     impressions.each((index, element) => {
       const $title = $(element).find(
         ".update-components-actor__title > .update-components-actor__single-line-truncate"
@@ -81,26 +44,29 @@ async function extractDataWhileScrolling(page: Page) {
       const $selected = $title.find("[aria-hidden=true]").text().trim();
 
       impressionsArr.push({
-        impression: index + 1,
-        data: $selected,
+        impression: totalImpressions + 1,
+        author: $selected,
       });
 
       console.log({
-        impression: index + 1,
-        data: $selected,
+        impression: totalImpressions + 1,
+        author: $selected,
       });
+
+      totalImpressions += 1;
+
+      // Stop extraction if the target number of impressions is reached
+      if (totalImpressions >= targetImpressions) {
+        return false;
+      }
     });
 
-    // If we've reached the end of the page, stop scrolling
-    const scrollHeight = await page.evaluate(() => document.body.scrollHeight);
-    const currentPosition = await page.evaluate(() => window.scrollY);
-
-    if (currentPosition + 100 >= scrollHeight) {
-      isScrolling = false;
-    }
-
-    // Scroll down slowly and randomly
-    await autoScroll(page);
+    // Wait for the page to load more content
+    previousHeight = Number(await page.evaluate("document.body.scrollHeight"));
+    await page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
+    await page.waitForFunction(
+      `document.body.scrollHeight > ${previousHeight}`
+    );
 
     // Random delay to simulate human-like scrolling pauses
     await randomDelay();
@@ -116,6 +82,7 @@ async function extractDataWhileScrolling(page: Page) {
   const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
   await page.setUserAgent(randomUserAgent);
+  // await page.setViewport({ width: 1366, height: 768 });
 
   try {
     // Visit the LinkedIn search page
@@ -134,10 +101,10 @@ async function extractDataWhileScrolling(page: Page) {
     // Random delay before starting scraping to mimic human behavior
     await randomDelay();
 
-    // Start extracting data while scrolling
-    const impressionsArr = await extractDataWhileScrolling(page);
-
-    console.log(impressionsArr);
+    // Start extracting data while scrolling until the target number of impressions is reached
+    // const impressionsArr =
+    await extractDataWhileScrolling(page, TARGET_IMPRESSIONS);
+    // console.log(impressionsArr);
   } catch (error) {
     console.error("ERROR: ", error.message);
   } finally {
