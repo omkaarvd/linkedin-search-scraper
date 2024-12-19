@@ -1,4 +1,4 @@
-This README explains how to implement a scraper that minimizes the risk of detection and restriction by linked servers. The techniques described ensure safe and efficient scraping practices.
+This README explains how to implement a scraper that minimizes the risk of detection and restriction. The techniques described ensure safe and efficient scraping practices.
 
 ## Key Implementation Strategies
 
