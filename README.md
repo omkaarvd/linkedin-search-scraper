@@ -1,9 +1,5 @@
 This README explains how to implement a scraper that minimizes the risk of detection and restriction. The techniques described ensure safe and efficient scraping practices.
 
-```bash
-absolute_path_t_/chrome.exe --remote-debugging-port=9222 --user-data-dir="absolute_path_to_user_data_folder"
-```
-
 ## Key Implementation Strategies
 
 ### 1. Randomize Request Timing
@@ -41,3 +37,12 @@ absolute_path_t_/chrome.exe --remote-debugging-port=9222 --user-data-dir="absolu
   - Hovering over elements.
   - Clicking buttons randomly.
   - Scrolling up and down at varying speeds and heights.
+
+```bash
+absolute_path_t_/chrome.exe --remote-debugging-port=9222 --user-data-dir="absolute_path_to_user_data_folder"
+```
+
+```bash
+# Git Bash
+/c/Program\ Files/Google/Chrome/Application/chrome.exe --remote-debugging-port=9222 --user-data-dir="/d/projects/linkedin-search-scraper/user_data"
+```
