@@ -108,7 +108,7 @@ export async function startScraping(keyword: string, targetPosts: number) {
     userAgents[Math.floor(Math.random() * userAgents.length)];
 
   const browser = await puppeteer.connect({
-    browserURL: "http://localhost:9222", // Ensure this matches the port used above
+    browserURL: "http://localhost:9222", // Ensure this matches the port used in the Chrome Remote Debugging setup
   });
 
   try {

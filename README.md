@@ -1,7 +1,7 @@
 This README explains how to implement a scraper that minimizes the risk of detection and restriction. The techniques described ensure safe and efficient scraping practices.
 
 ```bash
-/c/Program\ Files/Google/Chrome/Application/chrome.exe --remote-debugging-port=9222 --user-data-dir="absolute_path_to_user_data_folder"
+absolute_path_t_/chrome.exe --remote-debugging-port=9222 --user-data-dir="absolute_path_to_user_data_folder"
 ```
 
 ## Key Implementation Strategies
