@@ -19,7 +19,7 @@ export async function extractDataWhileScrolling(
   page: Page,
   targetPosts: number
 ) {
-  let postArr: { index: number; author: string }[] = [];
+  // let postArr: { index: number; author: string }[] = [];
   let totalPosts = 0;
   let previousHeight: number;
 
@@ -30,19 +30,55 @@ export async function extractDataWhileScrolling(
     const posts = $(".fie-impression-container");
 
     posts.each((index, element) => {
-      const $title = $(element).find(
-        ".update-components-actor__title > .update-components-actor__single-line-truncate"
-      );
-      const $selected = $title.find("[aria-hidden=true]").text().trim();
+      const container = $(element);
 
-      postArr.push({
-        index: totalPosts + 1,
-        author: $selected,
-      });
+      const name = container
+        .find('.update-components-actor__title span[aria-hidden="true"]')
+        .text()
+        .trim();
+      const description = container
+        .find(".update-components-actor__description")
+        .text()
+        .trim();
+      const profileLink = container
+        .find(".update-components-actor__meta-link")
+        .attr("href");
+      const postTime = container
+        .find(".update-components-actor__sub-description")
+        .text()
+        .trim();
+      const imageSrc = container
+        .find(".ivm-view-attr__img-wrapper img")
+        .attr("src");
+      const postContent = container
+        .find(".update-components-text span.break-words")
+        .text()
+        .trim();
+      const postLink = container
+        .find(".update-components-article__meta")
+        .attr("href");
+      const likes =
+        container
+          .find(".social-details-social-counts__reactions-count")
+          .text()
+          .trim() || "0";
+      const comments =
+        container
+          .find(".social-details-social-counts__comments")
+          .text()
+          .trim() || "0";
 
       console.log({
         index: totalPosts + 1,
-        author: $selected,
+        name,
+        description,
+        profileLink,
+        postTime,
+        imageSrc,
+        postContent,
+        postLink,
+        likes,
+        comments,
       });
 
       totalPosts += 1;
@@ -64,7 +100,7 @@ export async function extractDataWhileScrolling(
     await randomDelay();
   }
 
-  return postArr;
+  // return postArr;
 }
 
 export async function startScraping(keyword: string, targetPosts: number) {
@@ -105,3 +141,17 @@ export async function startScraping(keyword: string, targetPosts: number) {
     await browser.close();
   }
 }
+
+/* 
+
+
+//*[@id="ember801"]/div/div/div
+//*[@id="ember873"]/div/div/div
+//*[@id="ember828"]/div/div/div
+
+
+document.querySelector("#ember1023 > div > div > div")
+document.querySelector("#ember1051 > div > div > div")
+
+
+*/
