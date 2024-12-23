@@ -71,41 +71,34 @@ export async function startScraping(keyword: string, targetPosts: number) {
   const randomUserAgent =
     userAgents[Math.floor(Math.random() * userAgents.length)];
 
-  const browser = await puppeteer.launch({ headless: false });
-  const page = await browser.newPage();
-  await page.setViewport({ width: 1024, height: 768 });
-  await page.setUserAgent(randomUserAgent);
-
-  // Dynamically build the LinkedIn search URL based on the keyword
-  const LINKEDIN_URL = `https://www.linkedin.com/search/results/content/?keywords=${encodeURIComponent(
-    keyword
-  )}`;
+  const browser = await puppeteer.connect({
+    browserURL: "http://localhost:9222", // Ensure this matches the port used above
+  });
 
   try {
+    const pages = await browser.pages();
+    const page = pages.length ? pages[0] : await browser.newPage(); // Use an existing page or create a new one
+
+    await page.setViewport({
+      isLandscape: true,
+      width: 1366,
+      height: 768,
+    });
+
+    await page.setDefaultNavigationTimeout(2 * 60 * 1000);
+    await page.setUserAgent(randomUserAgent);
+
     // Visit the LinkedIn search page
-    await page.goto(LINKEDIN_URL, { waitUntil: "networkidle2" });
-
-    // Login
-    await page.waitForSelector("#username");
-    await page.type("#username", process.env.LINKEDIN_USERNAME!, {
-      delay: 300,
-    });
-
-    await page.waitForSelector("#password");
-    await page.type("#password", process.env.LINKEDIN_PASSWORD!, {
-      delay: 300,
-    });
-
-    await page.click('button[type="submit"]');
-    await page.waitForNavigation({ waitUntil: "networkidle2" });
+    await page.goto(
+      `https://www.linkedin.com/search/results/content/?keywords=${encodeURIComponent(
+        keyword
+      )}`
+    );
 
     // Random delay before starting scraping to mimic human behavior
     await randomDelay();
 
-    // Start extracting data while scrolling until the target number of posts are reached
-    // const postArr =
     await extractDataWhileScrolling(page, targetPosts);
-    // console.log(postArr);
   } catch (error) {
     console.error("ERROR: ", error.message);
   } finally {
