@@ -7,9 +7,9 @@ import { userAgents } from "./utils/user-agents";
 puppeteer.use(StealthPlugin());
 
 // Function to implement random delays to mimic human-like behavior
-function randomDelay() {
+function randomDelay(min = 5000, max = 15000) {
   return new Promise((resolve) => {
-    const delayTime = Math.random() * 5000 + 1000; // Random delay between 1 to 6 seconds
+    const delayTime = Math.random() * (max - min) + min; // Random delay between 5 to 15 seconds
     setTimeout(resolve, delayTime);
   });
 }
@@ -19,7 +19,6 @@ export async function extractDataWhileScrolling(
   page: Page,
   targetPosts: number
 ) {
-  // let postArr: { index: number; author: string }[] = [];
   let totalPosts = 0;
   let previousHeight: number;
 
@@ -140,8 +139,13 @@ export async function extractDataWhileScrolling(
       }
     });
 
-    // Wait for the page to load more content
+    // Wait for the page to load more content and scroll down with human-like behavior
     previousHeight = Number(await page.evaluate("document.body.scrollHeight"));
+
+    // Randomly scroll up and down to mimic human behavior before scrolling down again
+    await page.evaluate(() => window.scrollBy(0, -100));
+    await randomDelay(2000, 5000); // Short pause before scrolling down again
+
     await page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
     await page.waitForFunction(
       `document.body.scrollHeight > ${previousHeight}`
@@ -150,8 +154,6 @@ export async function extractDataWhileScrolling(
     // Random delay to simulate human-like scrolling pauses
     await randomDelay();
   }
-
-  // return postArr;
 }
 
 export async function startScraping(keyword: string, targetPosts: number) {
@@ -192,17 +194,3 @@ export async function startScraping(keyword: string, targetPosts: number) {
     await browser.close();
   }
 }
-
-/* 
-
-
-//*[@id="ember801"]/div/div/div
-//*[@id="ember873"]/div/div/div
-//*[@id="ember828"]/div/div/div
-
-
-document.querySelector("#ember1023 > div > div > div")
-document.querySelector("#ember1051 > div > div > div")
-
-
-*/
