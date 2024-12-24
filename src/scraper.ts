@@ -32,53 +32,104 @@ export async function extractDataWhileScrolling(
     posts.each((index, element) => {
       const container = $(element);
 
-      const name = container
-        .find('.update-components-actor__title span[aria-hidden="true"]')
-        .text()
-        .trim();
-      const description = container
-        .find(".update-components-actor__description")
-        .text()
-        .trim();
-      const profileLink = container
-        .find(".update-components-actor__meta-link")
-        .attr("href");
-      const postTime = container
-        .find(".update-components-actor__sub-description")
-        .text()
-        .trim();
-      const imageSrc = container
-        .find(".ivm-view-attr__img-wrapper img")
-        .attr("src");
+      // Post Details
       const postContent = container
         .find(".update-components-text span.break-words")
         .text()
         .trim();
-      const postLink = container
+
+      const postURL = container
         .find(".update-components-article__meta")
         .attr("href");
-      const likes =
+
+      const postTimestamp = container
+        .find(".update-components-actor__sub-description")
+        .text()
+        .trim();
+
+      const postType =
+        container.find(".update-components-article__description-container")
+          .length > 0
+          ? "Article"
+          : "Text-only";
+
+      const mediaURLs: string[] = [];
+      container.find(".ivm-image-view-model img").each((_, media) => {
+        mediaURLs.push($(media).attr("src") ?? "");
+      });
+
+      const likesCount =
         container
           .find(".social-details-social-counts__reactions-count")
           .text()
           .trim() || "0";
-      const comments =
+
+      const commentsCount =
         container
           .find(".social-details-social-counts__comments")
           .text()
           .trim() || "0";
 
+      const repostCount =
+        container
+          .find(".social-details-social-counts__reshares")
+          .text()
+          .trim() || "0";
+
+      // Extract hashtags
+      const hashtags: string[] = [];
+      container
+        .find('.update-components-text a[href*="/feed/hashtag"]')
+        .each((_, hashtag) => {
+          hashtags.push($(hashtag).text().trim());
+        });
+
+      // Extract mentions
+      const mentions: string[] = [];
+      container
+        .find('.update-components-text a[href*="/in/"]')
+        .each((_, mention) => {
+          mentions.push($(mention).text().trim());
+        });
+
+      // Author Details
+      const authorName = container
+        .find('.update-components-actor__title span[aria-hidden="true"]')
+        .text()
+        .trim();
+
+      const authorURL = container
+        .find(".update-components-actor__meta-link")
+        .attr("href");
+
+      const profilePictureURL = container
+        .find(".ivm-view-attr__img-wrapper img")
+        .attr("src");
+
+      const authorHeadline = container
+        .find(".update-components-actor__description")
+        .text()
+        .trim();
+
       console.log({
-        index: totalPosts + 1,
-        name,
-        description,
-        profileLink,
-        postTime,
-        imageSrc,
-        postContent,
-        postLink,
-        likes,
-        comments,
+        postDetails: {
+          postContent,
+          postURL,
+          postTimestamp,
+          postType,
+          mediaURLs,
+          likesCount,
+          commentsCount,
+          repostCount,
+          hashtags,
+          mentions,
+        },
+        authorDetails: {
+          authorName,
+          authorURL,
+          profilePictureURL,
+          authorHeadline,
+        },
       });
 
       totalPosts += 1;
