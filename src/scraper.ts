@@ -2,6 +2,7 @@ import * as cheerio from "cheerio";
 import { Page } from "puppeteer";
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
+import { cleanURL } from "./utils/clean-url";
 import { userAgents } from "./utils/user-agents";
 
 puppeteer.use(StealthPlugin());
@@ -63,6 +64,8 @@ export async function extractDataWhileScrolling(
         }
       }
 
+      const cleanedPostURL = cleanURL(postURL);
+
       const postTimestamp = container
         .find(".update-components-actor__sub-description")
         .text()
@@ -106,6 +109,8 @@ export async function extractDataWhileScrolling(
         .find(".update-components-actor__meta-link")
         .attr("href");
 
+      const cleanedAuthorURL = cleanURL(authorURL);
+
       const profilePictureURL = container
         .find(".ivm-view-attr__img-wrapper img")
         .attr("src");
@@ -118,7 +123,7 @@ export async function extractDataWhileScrolling(
       console.log({
         postDetails: {
           postContent,
-          postURL,
+          postURL: cleanedPostURL,
           postTimestamp,
           likesCount,
           commentsCount,
@@ -127,7 +132,7 @@ export async function extractDataWhileScrolling(
         },
         authorDetails: {
           authorName,
-          authorURL,
+          authorURL: cleanedAuthorURL,
           profilePictureURL,
           authorHeadline,
         },
