@@ -28,7 +28,8 @@ export async function extractDataWhileScrolling(
 
     const posts = $(".fie-impression-container");
 
-    posts.each((index, element) => {
+    for (let index = 0; index < posts.length; index++) {
+      const element = posts[index];
       const container = $(element);
 
       // Post Details
@@ -37,25 +38,35 @@ export async function extractDataWhileScrolling(
         .text()
         .trim();
 
-      const postURL = container
+      // Handle post URL
+      let postURL = container
         .find(".update-components-article__meta")
         .attr("href");
+
+      if (!postURL) {
+        // Simulate a click to reveal the post URL
+        const clickableSelector = ".update-components-article__meta";
+        const clickableElement = await page.$(clickableSelector);
+
+        if (clickableElement) {
+          await clickableElement.click();
+
+          // Random delay to wait for the URL to be revealed
+          randomDelay(1000, 2000);
+
+          const updatedContent = await page.content();
+          const updated$ = cheerio.load(updatedContent);
+
+          postURL = updated$(element)
+            .find(".update-components-article__meta")
+            .attr("href");
+        }
+      }
 
       const postTimestamp = container
         .find(".update-components-actor__sub-description")
         .text()
         .trim();
-
-      const postType =
-        container.find(".update-components-article__description-container")
-          .length > 0
-          ? "Article"
-          : "Text-only";
-
-      const mediaURLs: string[] = [];
-      container.find(".ivm-image-view-model img").each((_, media) => {
-        mediaURLs.push($(media).attr("src") ?? "");
-      });
 
       const likesCount =
         container
@@ -66,12 +77,6 @@ export async function extractDataWhileScrolling(
       const commentsCount =
         container
           .find(".social-details-social-counts__comments")
-          .text()
-          .trim() || "0";
-
-      const repostCount =
-        container
-          .find(".social-details-social-counts__reshares")
           .text()
           .trim() || "0";
 
@@ -115,11 +120,8 @@ export async function extractDataWhileScrolling(
           postContent,
           postURL,
           postTimestamp,
-          postType,
-          mediaURLs,
           likesCount,
           commentsCount,
-          repostCount,
           hashtags,
           mentions,
         },
@@ -135,9 +137,9 @@ export async function extractDataWhileScrolling(
 
       // Stop extraction if the target number of posts are reached
       if (totalPosts >= targetPosts) {
-        return false;
+        break;
       }
-    });
+    }
 
     // Wait for the page to load more content and scroll down with human-like behavior
     previousHeight = Number(await page.evaluate("document.body.scrollHeight"));
